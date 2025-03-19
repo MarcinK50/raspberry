@@ -36,18 +36,15 @@ else:
 
 sensor = dht.DHT22(Pin(16))
 
-def SaveIniFile(filename, dictionary):
+def save_file(filename, dictionary):
     with open(filename, "a") as f:
         for key in dictionary:
             f.write(f'{dictionary["time"]};{dictionary["temp"]};{dictionary["hum"]}\n')
-            
-def LoadIniFile(filename):
-    dictionary = {}
-    with open(filename, "r") as f:
-        for s in f:
-            lst = s.strip().split(",")
-            dictionary[lst[0]] = lst[1]
-    return dictionary
+
+def zfl(s, width):
+    # Pads the provided string with leading 0's to suit the specified 'chrs' length
+    # Force # characters, fill with leading 0's
+    return '{:0>{w}}'.format(s, w=width)
 
 while True:
   try:
@@ -59,9 +56,9 @@ while True:
     print('Wilgotnosc: %3.1f %%' %hum)
     print(f'{RTC().datetime()}\n')
     data = {}
-    data["time"] = f"{RTC().datetime()[4]+1}:{RTC().datetime()[5]}:{RTC().datetime()[6]}" # TODO: godzina w RTC jest w UTC; trzeba przesunac zgodnie z strefa
+    data["time"] = f"{zfl(RTC().datetime()[4]+1,2)}:{zfl(RTC().datetime()[5],2)}:{zfl(RTC().datetime()[6],2)}" # TODO: godzina w RTC jest w UTC; trzeba przesunac zgodnie z strefa
     data["temp"] = temp
     data["hum"] = hum
-    SaveIniFile("/dane.txt", data)
+    save_file("/dane.txt", data)
   except OSError as e:
     print('Failed to read sensor.')
