@@ -1,64 +1,124 @@
-from machine import Pin, RTC
-import dht
-from time import sleep
-import network
-import ntptime
+import utime, network, dht, mrequests as requests
+from machine import Pin
+from pms5003 import PMS5003
 import secret
 
+location = 'pokoj'
 ssid = secret.ssid
 password = secret.password
+ip, port = secret.server_ip, secret.server_port
+url = f"http://{ip}:{port}/exec"
 
-# Init Wi-Fi Interface
-wlan = network.WLAN(network.STA_IF)
-wlan.active(True)
-
-# Connect to your network
-wlan.connect(ssid, password)
-
-# Wait for Wi-Fi connection
-connection_timeout = 10
-while connection_timeout > 0:
-    if wlan.status() >= 3:
-        break
-    connection_timeout -= 1
-    print('Laczenie.....')
-    sleep(1)
-
-# Check if connection is successful
-if wlan.status() != 3:
-    raise RuntimeError('Blad polaczenia')
-else:
-    print('Pomyslnie polaczono!')
-    network_info = wlan.ifconfig()
-    print('IP:', network_info[0])
-    ntptime.host = "tempus1.gum.gov.pl"
-    ntptime.settime()
+power_led = Pin(10, Pin.OUT)
+wifi_led = Pin(11, Pin.OUT)
+data_led = Pin(12, Pin.OUT)
+power_led.value(0)
+wifi_led.value(0)
+data_led.value(0)
 
 sensor = dht.DHT22(Pin(16))
+pms5003 = PMS5003(
+    uart=machine.UART(1, tx=Pin(8), rx=Pin(9), baudrate=9600),
+    pin_enable=Pin(3),
+    pin_reset=Pin(2),
+    mode="active"
+)
 
-def save_file(filename, dictionary):
-    with open(filename, "a") as f:
-        for key in dictionary:
-            f.write(f'{dictionary["time"]};{dictionary["temp"]};{dictionary["hum"]}\n')
+power_led.value(1)
 
-def zfl(s, width):
-    # Pads the provided string with leading 0's to suit the specified 'chrs' length
-    # Force # characters, fill with leading 0's
-    return '{:0>{w}}'.format(s, w=width)
 
-while True:
-  try:
-    sleep(2)
-    sensor.measure()
-    temp = sensor.temperature()
-    hum = sensor.humidity()
-    print('Temperatura: %3.1f C' %temp)
-    print('Wilgotnosc: %3.1f %%' %hum)
-    print(f'{RTC().datetime()}\n')
-    data = {}
-    data["time"] = f"{zfl(RTC().datetime()[4]+1,2)}:{zfl(RTC().datetime()[5],2)}:{zfl(RTC().datetime()[6],2)}" # TODO: godzina w RTC jest w UTC; trzeba przesunac zgodnie z strefa
-    data["temp"] = temp
-    data["hum"] = hum
-    save_file("/dane.txt", data)
-  except OSError as e:
-    print('Failed to read sensor.')
+def connect_to_wifi(ssid,password):
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+    wlan.connect(ssid, password)
+    connection_timeout = 10
+    while connection_timeout > 0:
+        if wlan.status() >= 3:
+            break
+        connection_timeout -= 1
+        print('Laczenie.....')
+        utime.sleep(1)
+    
+    if wlan.status() != 3:
+        raise RuntimeError('Blad polaczenia')
+    else:
+        print('Pomyslnie polaczono!')
+        wifi_led.value(1)
+        network_info = wlan.ifconfig()
+        print('IP:', network_info[0])
+        #ntptime.host = "tempus1.gum.gov.pl"
+        #ntptime.settime()
+       
+def get_temperature():
+    try:
+        data = sensor.measure()
+        temp = sensor.temperature()
+        hum = sensor.humidity()
+        print('reading dht22 success')
+        file = open('dht22.txt', "w")
+        file.write(f'{temp}, {hum}')
+        file.close()
+        print([temp,hum])
+        return [temp, hum]
+    except:
+        print('error reading dht22! getting last values')
+        file = open('dht22.txt', "r")
+        temp, hum = file.read().split(',')
+        file.close()
+        return [float(temp), float(hum)]
+
+def get_pollution():
+    try:
+        pms = pms5003.read()
+        pm1 = pms.data[0]
+        pm25 = pms.data[1]
+        pm10 = pms.data[2]
+        print('reading pms5003 success')
+        file = open('pms5003.txt', "w")
+        file.write(f'{pm1}, {pm25}, {pm10}')
+        file.close()
+        print([pm1, pm25, pm10])
+        return [pm1, pm25, pm10]
+    except:
+        print('error reading pms5003! getting last values')
+        file = open('pms5003.txt', "r")
+        pm1, pm25, pm10 = file.read().split(',')
+        file.close()
+        return [int(pm1), int(pm25), int(pm10)]
+
+def url_encode(string):
+    encoded_string = ''
+    for char in string:
+        if char.isalpha() or char.isdigit() or char in '-._~':
+            encoded_string += char
+        else:
+            encoded_string += '%' + '{:02X}'.format(ord(char))
+    return encoded_string
+
+def send_results(location,temperature, humidity, pm1, pm25, pm10):
+    query = f"INSERT INTO sensors(id,temperature,humidity,pm1,pm25,pm10,timestamp) VALUES('{location}',{str(temperature)},{str(humidity)},{str(pm1)},{str(pm25)},{str(pm10)},systimestamp())"
+    full_url = url+"?query="+url_encode(query)
+    
+    try:
+        requests.get(url=full_url, auth=(secret.questdb_user, secret.questdb_password))
+        return 0
+    except Exception as error:
+        if str(error) == "unsupported types for __add__: 'str', 'bytes'": return 0
+        else: return 1
+
+def main():
+  connect_to_wifi(ssid,password)
+  while True:
+    temperature, humidity = get_temperature()
+    pm1, pm25, pm10 = get_pollution()
+    response = send_results(location,temperature, humidity, pm1, pm25, pm10)
+    while response != 0:
+        response = send_results(location,temperature, humidity, pm1, pm25, pm10)
+        print(response)
+        utime.sleep(1)
+    data_led.value(1)
+    utime.sleep(1)
+    data_led.value(0)
+    utime.sleep(60)
+
+main()
