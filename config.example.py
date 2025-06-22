@@ -7,3 +7,5 @@ server_port = '9000' # default port - 9000
 # questdb http basic auth user & password
 questdb_user = 'admin' 
 questdb_password = 'admin'
+
+status_led = True # or False to turn LEDs off

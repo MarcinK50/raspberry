@@ -1,12 +1,12 @@
 import utime, network, dht, mrequests as requests
 from machine import Pin, UART
 from pms5003 import PMS5003
-import secret
+import config
 
 location = 'pokoj'
-ssid = secret.ssid
-password = secret.password
-ip, port = secret.server_ip, secret.server_port
+ssid = config.ssid
+password = config.password
+ip, port = config.server_ip, config.server_port
 url = f"http://{ip}:{port}/exec"
 
 power_led = Pin(10, Pin.OUT)
@@ -24,7 +24,7 @@ pms5003 = PMS5003(
     mode="active"
 )
 
-power_led.value(1)
+if config.status_led: power_led.value(1)
 
 
 def connect_to_wifi(ssid,password):
@@ -43,7 +43,7 @@ def connect_to_wifi(ssid,password):
         raise RuntimeError('Blad polaczenia')
     else:
         print('Pomyslnie polaczono!')
-        wifi_led.value(1)
+        if config.status_led: wifi_led.value(1)
         network_info = wlan.ifconfig()
         print('IP:', network_info[0])
         #ntptime.host = "tempus1.gum.gov.pl"
@@ -100,7 +100,7 @@ def send_results(location,temperature, humidity, pm1, pm25, pm10):
     full_url = url+"?query="+url_encode(query)
     
     try:
-        requests.get(url=full_url, auth=(secret.questdb_user, secret.questdb_password))
+        requests.get(url=full_url, auth=(config.questdb_user, config.questdb_password))
         return 0
     except Exception as error:
         if str(error) == "unsupported types for __add__: 'str', 'bytes'": return 0
@@ -116,9 +116,10 @@ def main():
         response = send_results(location,temperature, humidity, pm1, pm25, pm10)
         print(response)
         utime.sleep(1)
-    data_led.value(1)
-    utime.sleep(1)
-    data_led.value(0)
+    if config.status_led:
+        data_led.value(1)
+        utime.sleep(1)
+        data_led.value(0)
     utime.sleep(60)
 
 main()
