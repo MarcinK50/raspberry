@@ -1,4 +1,4 @@
-# RPi Zero W + DHT22 + PMS5003 sensor
+# RPi Pico W + DHT22 + PMS5003 sensor
 
 ![zdjecie](https://raw.githubusercontent.com/MarcinK50/raspberry/refs/heads/main/picture.jpg)
 
