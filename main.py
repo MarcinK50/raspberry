@@ -7,7 +7,12 @@ location = 'pokoj'
 ssid = config.ssid
 password = config.password
 ip, port = config.server_ip, config.server_port
+
+lat = config.lat
+lon = config.lon
+
 url = f"http://{ip}:{port}/exec"
+update_rate = 15
 
 power_led = Pin(10, Pin.OUT)
 wifi_led = Pin(11, Pin.OUT)
@@ -61,11 +66,8 @@ def get_temperature():
         print([temp,hum])
         return [temp, hum]
     except:
-        print('error reading dht22! getting last values')
-        file = open('dht22.txt', "r")
-        temp, hum = file.read().split(',')
-        file.close()
-        return [float(temp), float(hum)]
+        print('error reading dht22!')
+        return ['NULL', 'NULL']
 
 def get_pollution():
     try:
@@ -80,11 +82,8 @@ def get_pollution():
         print([pm1, pm25, pm10])
         return [pm1, pm25, pm10]
     except:
-        print('error reading pms5003! getting last values')
-        file = open('pms5003.txt', "r")
-        pm1, pm25, pm10 = file.read().split(',')
-        file.close()
-        return [int(pm1), int(pm25), int(pm10)]
+        print('error reading pms5003!')
+        return ['NULL', 'NULL', 'NULL']
 
 def url_encode(string):
     encoded_string = ''
@@ -96,7 +95,7 @@ def url_encode(string):
     return encoded_string
 
 def send_results(location,temperature, humidity, pm1, pm25, pm10):
-    query = f"INSERT INTO sensors(id,temperature,humidity,pm1,pm25,pm10,timestamp) VALUES('{location}',{str(temperature)},{str(humidity)},{str(pm1)},{str(pm25)},{str(pm10)},systimestamp())"
+    query = f"INSERT INTO sensors(id,lat,lng,temperature,humidity,pm1,pm25,pm10,timestamp) VALUES('{location}',{str(lat)},{str(lon)},{str(temperature)},{str(humidity)},{str(pm1)},{str(pm25)},{str(pm10)},systimestamp())"
     full_url = url+"?query="+url_encode(query)
     
     try:
@@ -120,6 +119,6 @@ def main():
         data_led.value(1)
         utime.sleep(1)
         data_led.value(0)
-    utime.sleep(60)
+    utime.sleep(update_rate)
 
 main()
