@@ -11,3 +11,9 @@ power status (red) - GPIO10
 wifi status (yellow) - GPIO11
 data status (green) - GPIO12
 ```
+
+# TODO:
+- [ ] refactor and clean code
+- [ ] error handling (Wi-Fi)
+- [ ] PCB and 3D-printed case
+- [ ] better data presentation (map in Grafana?)
