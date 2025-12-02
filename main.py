@@ -2,17 +2,19 @@ import utime, network, dht, mrequests as requests
 from machine import Pin, UART
 from pms5003 import PMS5003
 import config
+import ubinascii
 
-location = 'pokoj'
+DO_DEBUG = True
+
+location = 'pokoj' # TODO: Move to config
 ssid = config.ssid
 password = config.password
 ip, port = config.server_ip, config.server_port
-
 lat = config.lat
 lon = config.lon
 
 url = f"http://{ip}:{port}/exec"
-update_rate = 15
+UPDATE_RATE = 15 # TODO: Move to config
 
 power_led = Pin(10, Pin.OUT)
 wifi_led = Pin(11, Pin.OUT)
@@ -33,24 +35,36 @@ if config.status_led: power_led.value(1)
 
 
 def connect_to_wifi(ssid,password):
+    if DO_DEBUG:
+        print('SSID: ', ssid)
+        print('Pass: ', password)
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
+    if DO_DEBUG:    
+        mac = ubinascii.hexlify(wlan.config('mac'),':').decode()
+        print('MAC: ', mac)
+        for w in wlan.scan():
+            print(' * ', w[0].decode())        
+    
     wlan.connect(ssid, password)
-    connection_timeout = 10
+    connection_timeout = 10 # TODO: move to config
+    print('Connecting', end='')
     while connection_timeout > 0:
         if wlan.status() >= 3:
             break
         connection_timeout -= 1
-        print('Laczenie.....')
+        print('.', end='')
         utime.sleep(1)
     
     if wlan.status() != 3:
-        raise RuntimeError('Blad polaczenia')
+        raise RuntimeError('Connection error')
     else:
-        print('Pomyslnie polaczono!')
+        print('Connection successful!')
         if config.status_led: wifi_led.value(1)
         network_info = wlan.ifconfig()
-        print('IP:', network_info[0])
+        if DO_DEBUG:
+            print('IP:', network_info[0])
+            
         #ntptime.host = "tempus1.gum.gov.pl"
         #ntptime.settime()
        
@@ -59,14 +73,14 @@ def get_temperature():
         data = sensor.measure()
         temp = sensor.temperature()
         hum = sensor.humidity()
-        print('reading dht22 success')
+        print('Reading dht22 success')
         file = open('dht22.txt', "w")
-        file.write(f'{temp}, {hum}')
+        file.write(f'{temp}, {hum}') # Add timestamp to log
         file.close()
         print([temp,hum])
         return [temp, hum]
     except:
-        print('error reading dht22!')
+        print('Error reading dht22!')
         return ['NULL', 'NULL']
 
 def get_pollution():
@@ -75,14 +89,14 @@ def get_pollution():
         pm1 = pms.data[0]
         pm25 = pms.data[1]
         pm10 = pms.data[2]
-        print('reading pms5003 success')
+        print('Reading pms5003 success') 
         file = open('pms5003.txt', "w")
-        file.write(f'{pm1}, {pm25}, {pm10}')
+        file.write(f'{pm1}, {pm25}, {pm10}') # Add timestamp to log
         file.close()
         print([pm1, pm25, pm10])
         return [pm1, pm25, pm10]
     except:
-        print('error reading pms5003!')
+        print('Rrror reading pms5003!')
         return ['NULL', 'NULL', 'NULL']
 
 def url_encode(string):
@@ -95,30 +109,39 @@ def url_encode(string):
     return encoded_string
 
 def send_results(location,temperature, humidity, pm1, pm25, pm10):
+    # TODO: Don't send lat, lng into database rows. Make it separate.
     query = f"INSERT INTO sensors(id,lat,lng,temperature,humidity,pm1,pm25,pm10,timestamp) VALUES('{location}',{str(lat)},{str(lon)},{str(temperature)},{str(humidity)},{str(pm1)},{str(pm25)},{str(pm10)},systimestamp())"
     full_url = url+"?query="+url_encode(query)
+    
+    
+    if DO_DEBUG:
+        print("Executing query : ")
+        print(full_url)
     
     try:
         requests.get(url=full_url, auth=(config.questdb_user, config.questdb_password))
         return 0
     except Exception as error:
-        if str(error) == "unsupported types for __add__: 'str', 'bytes'": return 0
-        else: return 1
+        if str(error) == "Unsupported types for __add__: 'str', 'bytes'": return 0
+        else:
+            print("General error: ",str(error))
+            return 1
 
 def main():
-  connect_to_wifi(ssid,password)
-  while True:
-    temperature, humidity = get_temperature()
-    pm1, pm25, pm10 = get_pollution()
-    response = send_results(location,temperature, humidity, pm1, pm25, pm10)
-    while response != 0:
+    connect_to_wifi(ssid,password)
+    while True:
+        temperature, humidity = get_temperature()
+        pm1, pm25, pm10 = get_pollution()
         response = send_results(location,temperature, humidity, pm1, pm25, pm10)
-        print(response)
-        utime.sleep(1)
-    if config.status_led:
-        data_led.value(1)
-        utime.sleep(1)
-        data_led.value(0)
-    utime.sleep(update_rate)
+        while response != 0:
+            response = send_results(location,temperature, humidity, pm1, pm25, pm10)
+            print("Sending : ",response)
+            utime.sleep(1)
+        if config.status_led:
+            data_led.value(1)
+            utime.sleep(1)
+            data_led.value(0)
+        
+        utime.sleep(UPDATE_RATE)
 
 main()
