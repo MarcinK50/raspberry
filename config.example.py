@@ -9,7 +9,7 @@ server_port = '8080' # default port - 9000
 questdb_user = 'marcin' 
 questdb_password = '1a2b3c4d5E'
 
-location = 'pracownia'
+location_id = 0
 lat = '50.552494'
 lon = '16.689344'
 

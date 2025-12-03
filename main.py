@@ -6,22 +6,17 @@ import ubinascii
 
 DO_DEBUG = True
 
-
-
 SSID = config.ssid
 PASSWORD = config.password
 QUESTDB_USER = config.questdb_user
 QUESTDB_PASSWORD = config.questdb_password
 
-LOCATION = config.location
+ID = config.location_id
 IP, PORT = config.server_ip, config.server_port
 UPDATE_RATE = config.update_rate
 lat = config.lat
 lon = config.lon
 url = f"http://{IP}:{PORT}/exec"
-
-
-
 
 power_led = Pin(10, Pin.OUT)
 wifi_led = Pin(11, Pin.OUT)
@@ -40,7 +35,6 @@ pms5003 = PMS5003(
 
 if config.status_led: power_led.value(1)
 
-
 def connect_to_wifi(ssid,password):
     if DO_DEBUG:
         print('SSID: ', ssid)
@@ -54,7 +48,7 @@ def connect_to_wifi(ssid,password):
             print(' * ', w[0].decode())        
     
     wlan.connect(SSID, PASSWORD)
-    connection_timeout = config.wifi_timeout # TODO: move to config
+    connection_timeout = config.wifi_timeout
     print('Connecting', end='')
     while connection_timeout > 0:
         if wlan.status() >= 3:
@@ -115,9 +109,9 @@ def url_encode(string):
             encoded_string += '%' + '{:02X}'.format(ord(char))
     return encoded_string
 
-def send_results(LOCATION,temperature, humidity, pm1, pm25, pm10):
+def send_results(ID,temperature, humidity, pm1, pm25, pm10):
     # TODO: Don't send lat, lng into database rows. Make it separate.
-    query = f"INSERT INTO sensors(id,temperature,humidity,pm1,pm25,pm10,timestamp) VALUES('{LOCATION}',{str(temperature)},{str(humidity)},{str(pm1)},{str(pm25)},{str(pm10)},systimestamp())"
+    query = f"INSERT INTO sensors(id,temperature,humidity,pm1,pm25,pm10,timestamp) VALUES('{ID}',{str(temperature)},{str(humidity)},{str(pm1)},{str(pm25)},{str(pm10)},systimestamp())"
     full_url = url+"?query="+url_encode(query)
     
     
@@ -139,9 +133,9 @@ def main():
     while True:
         temperature, humidity = get_temperature()
         pm1, pm25, pm10 = get_pollution()
-        response = send_results(LOCATION,temperature, humidity, pm1, pm25, pm10)
+        response = send_results(ID,temperature, humidity, pm1, pm25, pm10)
         while response != 0:
-            response = send_results(LOCATION,temperature, humidity, pm1, pm25, pm10)
+            response = send_results(ID,temperature, humidity, pm1, pm25, pm10)
             print("Sending : ",response)
             utime.sleep(1)
         if config.status_led:
