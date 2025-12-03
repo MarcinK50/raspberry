@@ -6,15 +6,22 @@ import ubinascii
 
 DO_DEBUG = True
 
-location = 'pokoj' # TODO: Move to config
-ssid = config.ssid
-password = config.password
-ip, port = config.server_ip, config.server_port
+
+
+SSID = config.ssid
+PASSWORD = config.password
+QUESTDB_USER = config.questdb_user
+QUESTDB_PASSWORD = config.questdb_password
+
+LOCATION = config.location
+IP, PORT = config.server_ip, config.server_port
+UPDATE_RATE = config.update_rate
 lat = config.lat
 lon = config.lon
+url = f"http://{IP}:{PORT}/exec"
 
-url = f"http://{ip}:{port}/exec"
-UPDATE_RATE = 15 # TODO: Move to config
+
+
 
 power_led = Pin(10, Pin.OUT)
 wifi_led = Pin(11, Pin.OUT)
@@ -46,7 +53,7 @@ def connect_to_wifi(ssid,password):
         for w in wlan.scan():
             print(' * ', w[0].decode())        
     
-    wlan.connect(ssid, password)
+    wlan.connect(SSID, PASSWORD)
     connection_timeout = 10 # TODO: move to config
     print('Connecting', end='')
     while connection_timeout > 0:
@@ -108,9 +115,9 @@ def url_encode(string):
             encoded_string += '%' + '{:02X}'.format(ord(char))
     return encoded_string
 
-def send_results(location,temperature, humidity, pm1, pm25, pm10):
+def send_results(LOCATION,temperature, humidity, pm1, pm25, pm10):
     # TODO: Don't send lat, lng into database rows. Make it separate.
-    query = f"INSERT INTO sensors(id,lat,lng,temperature,humidity,pm1,pm25,pm10,timestamp) VALUES('{location}',{str(lat)},{str(lon)},{str(temperature)},{str(humidity)},{str(pm1)},{str(pm25)},{str(pm10)},systimestamp())"
+    query = f"INSERT INTO sensors(id,lat,lng,temperature,humidity,pm1,pm25,pm10,timestamp) VALUES('{LOCATION}',{str(lat)},{str(lon)},{str(temperature)},{str(humidity)},{str(pm1)},{str(pm25)},{str(pm10)},systimestamp())"
     full_url = url+"?query="+url_encode(query)
     
     
@@ -119,7 +126,7 @@ def send_results(location,temperature, humidity, pm1, pm25, pm10):
         print(full_url)
     
     try:
-        requests.get(url=full_url, auth=(config.questdb_user, config.questdb_password))
+        requests.get(url=full_url, auth=(QUESTDB_USER, QUESTDB_PASSWORD))
         return 0
     except Exception as error:
         if str(error) == "Unsupported types for __add__: 'str', 'bytes'": return 0
@@ -128,13 +135,13 @@ def send_results(location,temperature, humidity, pm1, pm25, pm10):
             return 1
 
 def main():
-    connect_to_wifi(ssid,password)
+    connect_to_wifi(SSID,PASSWORD)
     while True:
         temperature, humidity = get_temperature()
         pm1, pm25, pm10 = get_pollution()
-        response = send_results(location,temperature, humidity, pm1, pm25, pm10)
+        response = send_results(LOCATION,temperature, humidity, pm1, pm25, pm10)
         while response != 0:
-            response = send_results(location,temperature, humidity, pm1, pm25, pm10)
+            response = send_results(LOCATION,temperature, humidity, pm1, pm25, pm10)
             print("Sending : ",response)
             utime.sleep(1)
         if config.status_led:

@@ -8,8 +8,9 @@ server_port = '8080' # default port - 9000
 questdb_user = 'marcin' 
 questdb_password = '1a2b3c4d5E'
 
+location = 'pracownia'
+lat = '50.552494'
+lon = '16.689344'
+
+update_rate = 15
 status_led = True # or False to turn LEDs off
-
-
-lat = 50.581671
-lon = 16.691180
