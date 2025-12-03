@@ -1,5 +1,6 @@
 ssid = 'wifi-ssid'
 password = 'wifi-password'
+wifi_timeout = 10
 
 server_ip = '192.168.10.208'
 server_port = '8080' # default port - 9000

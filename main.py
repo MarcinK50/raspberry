@@ -54,7 +54,7 @@ def connect_to_wifi(ssid,password):
             print(' * ', w[0].decode())        
     
     wlan.connect(SSID, PASSWORD)
-    connection_timeout = 10 # TODO: move to config
+    connection_timeout = config.wifi_timeout # TODO: move to config
     print('Connecting', end='')
     while connection_timeout > 0:
         if wlan.status() >= 3:
@@ -117,7 +117,7 @@ def url_encode(string):
 
 def send_results(LOCATION,temperature, humidity, pm1, pm25, pm10):
     # TODO: Don't send lat, lng into database rows. Make it separate.
-    query = f"INSERT INTO sensors(id,lat,lng,temperature,humidity,pm1,pm25,pm10,timestamp) VALUES('{LOCATION}',{str(lat)},{str(lon)},{str(temperature)},{str(humidity)},{str(pm1)},{str(pm25)},{str(pm10)},systimestamp())"
+    query = f"INSERT INTO sensors(id,temperature,humidity,pm1,pm25,pm10,timestamp) VALUES('{LOCATION}',{str(temperature)},{str(humidity)},{str(pm1)},{str(pm25)},{str(pm10)},systimestamp())"
     full_url = url+"?query="+url_encode(query)
     
     
