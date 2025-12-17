@@ -3,6 +3,8 @@ from machine import Pin, UART
 from pms5003 import PMS5003
 import config
 import ubinascii
+import os
+import ntptime, time
 
 DO_DEBUG = True
 
@@ -58,30 +60,30 @@ def connect_to_wifi(ssid,password):
         utime.sleep(1)
     
     if wlan.status() != 3:
+        log(2, 'Wi-Fi Connection error!')
         raise RuntimeError('Connection error')
     else:
         print('Connection successful!')
+        log(0, 'Wi-Fi Connection successful!')
         if config.status_led: wifi_led.value(1)
         network_info = wlan.ifconfig()
         if DO_DEBUG:
             print('IP:', network_info[0])
             
-        #ntptime.host = "tempus1.gum.gov.pl"
-        #ntptime.settime()
+        ntptime.host = "tempus1.gum.gov.pl"
+        ntptime.settime()
        
 def get_temperature():
     try:
         data = sensor.measure()
         temp = sensor.temperature()
         hum = sensor.humidity()
-        print('Reading dht22 success')
-        file = open('dht22.txt', "w")
-        file.write(f'{temp}, {hum}') # Add timestamp to log
-        file.close()
+        print('Reading dht22 success!')
         print([temp,hum])
         return [temp, hum]
     except:
         print('Error reading dht22!')
+        log(2, 'No data from DHT22')
         return ['NULL', 'NULL']
 
 def get_pollution():
@@ -90,15 +92,24 @@ def get_pollution():
         pm1 = pms.data[0]
         pm25 = pms.data[1]
         pm10 = pms.data[2]
-        print('Reading pms5003 success') 
-        file = open('pms5003.txt', "w")
-        file.write(f'{pm1}, {pm25}, {pm10}') # Add timestamp to log
-        file.close()
+        print('Reading pms5003 success!') 
         print([pm1, pm25, pm10])
         return [pm1, pm25, pm10]
     except:
-        print('Rrror reading pms5003!')
+        print('Error reading pms5003!')
+        log(2, 'No data from PMS5003')
         return ['NULL', 'NULL', 'NULL']
+    
+def log(code, message):
+    timestamp = time.time()
+    
+    file = open('log.txt', "a")
+    file.write(f'{timestamp}, {code}, {message}\n')
+    file.close()
+    
+    query = f"INSERT INTO log(id,timestamp,code,message) VALUES('{ID}',{timestamp},{str(code)},{str(message)})"
+    full_url = url+"?query="+url_encode(query)
+    requests.get(url=full_url, auth=(QUESTDB_USER, QUESTDB_PASSWORD))
 
 def url_encode(string):
     encoded_string = ''
@@ -110,8 +121,7 @@ def url_encode(string):
     return encoded_string
 
 def send_results(ID,temperature, humidity, pm1, pm25, pm10):
-    # TODO: Don't send lat, lng into database rows. Make it separate.
-    query = f"INSERT INTO sensors(id,temperature,humidity,pm1,pm25,pm10,timestamp) VALUES('{ID}',{str(temperature)},{str(humidity)},{str(pm1)},{str(pm25)},{str(pm10)},systimestamp())"
+    query = f"INSERT INTO sensors(id,temperature,humidity,pm1,pm25,pm10,timestamp) VALUES('{ID}',{str(temperature)},{str(humidity)},{str(pm1)},{str(pm25)},{str(pm10)},{time.time()})"
     full_url = url+"?query="+url_encode(query)
     
     
@@ -142,6 +152,13 @@ def main():
             data_led.value(1)
             utime.sleep(1)
             data_led.value(0)
+
+            stat = os.statvfs("/")
+            size = stat[1] * stat[2]
+            free = stat[0] * stat[3]
+            used = size - free
+            
+            print(f'Zajete: {used/size*100}% pamieci')
         
         utime.sleep(UPDATE_RATE)
 
