@@ -15,4 +15,4 @@ CREATE TABLE 'sensors' (
   pm10 INT
 ) timestamp (timestamp) PARTITION BY MONTH WAL;
 
-CREATE TABLE 'log' (id INT, timestamp TIMESTAMP, code INT, message STRING);
+CREATE TABLE 'log' (id INT, timestamp TIMESTAMP, code INT, message STRING) timestamp (timestamp) PARTITION BY MONTH WAL;

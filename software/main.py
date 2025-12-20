@@ -16,6 +16,7 @@ QUESTDB_PASSWORD = config.questdb_password
 ID = config.location_id
 IP, PORT = config.server_ip, config.server_port
 UPDATE_RATE = config.update_rate
+LOG_STATUS_OK = 10
 lat = config.lat
 lon = config.lon
 url = f"http://{IP}:{PORT}/exec"
@@ -64,14 +65,13 @@ def connect_to_wifi(ssid,password):
         raise RuntimeError('Connection error')
     else:
         print('Connection successful!')
+        ntptime.host = "0.pool.ntp.org"
+        ntptime.settime()
         log(0, 'Wi-Fi Connection successful!')
         if config.status_led: wifi_led.value(1)
         network_info = wlan.ifconfig()
         if DO_DEBUG:
             print('IP:', network_info[0])
-            
-        ntptime.host = "tempus1.gum.gov.pl"
-        ntptime.settime()
        
 def get_temperature():
     try:
@@ -101,15 +101,25 @@ def get_pollution():
         return ['NULL', 'NULL', 'NULL']
     
 def log(code, message):
-    timestamp = time.time()
+    timestamp = int(f'{time.time()}000000') # TODO: to convert timestamp from NTP to nanoseconds format, this is very sketchy, make it better
     
     file = open('log.txt', "a")
     file.write(f'{timestamp}, {code}, {message}\n')
     file.close()
     
-    query = f"INSERT INTO log(id,timestamp,code,message) VALUES('{ID}',{timestamp},{str(code)},{str(message)})"
-    full_url = url+"?query="+url_encode(query)
-    requests.get(url=full_url, auth=(QUESTDB_USER, QUESTDB_PASSWORD))
+    query = f"INSERT INTO log (id,timestamp,code,message) VALUES ({ID},{timestamp},{str(code)},'{str(message)}')"
+    log_url = url+"?query="+url_encode(query)
+    if DO_DEBUG:
+        print("[LOG] Executing query : ")
+        print(log_url)
+    try:
+        requests.get(url=log_url, auth=(QUESTDB_USER, QUESTDB_PASSWORD))
+        return 0
+    except Exception as error:
+        if str(error) == "Unsupported types for __add__: 'str', 'bytes'": return 0
+        else:
+            print("[LOG] General error: ",str(error))
+            return 1
 
 def url_encode(string):
     encoded_string = ''
@@ -121,7 +131,7 @@ def url_encode(string):
     return encoded_string
 
 def send_results(ID,temperature, humidity, pm1, pm25, pm10):
-    query = f"INSERT INTO sensors(id,temperature,humidity,pm1,pm25,pm10,timestamp) VALUES('{ID}',{str(temperature)},{str(humidity)},{str(pm1)},{str(pm25)},{str(pm10)},{time.time()})"
+    query = f"INSERT INTO sensors(id,temperature,humidity,pm1,pm25,pm10,timestamp) VALUES('{ID}',{str(temperature)},{str(humidity)},{str(pm1)},{str(pm25)},{str(pm10)},{time.time()}000000)"
     full_url = url+"?query="+url_encode(query)
     
     
@@ -140,6 +150,7 @@ def send_results(ID,temperature, humidity, pm1, pm25, pm10):
 
 def main():
     connect_to_wifi(SSID,PASSWORD)
+    status_timer = 0
     while True:
         temperature, humidity = get_temperature()
         pm1, pm25, pm10 = get_pollution()
@@ -160,6 +171,10 @@ def main():
             
             print(f'Zajete: {used/size*100}% pamieci')
         
+        if status_timer == LOG_STATUS_OK:
+            log(0, 'OK')
+            status_timer = 0
+        else: status_timer += 1
         utime.sleep(UPDATE_RATE)
 
 main()
