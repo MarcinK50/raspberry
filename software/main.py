@@ -17,7 +17,8 @@ QUESTDB_PASSWORD = config.questdb_password
 ID = config.location_id
 IP, PORT = config.server_ip, config.server_port
 UPDATE_RATE = config.update_rate
-LOG_STATUS_OK = 10
+LOG_STATUS_OK = config.log_status_ok
+MAX_LOG_FILESIZE = config.max_log_filesize
 lat = config.lat
 lon = config.lon
 url = f"http://{IP}:{PORT}/exec"
@@ -66,8 +67,12 @@ def connect_to_wifi(ssid,password):
         raise RuntimeError('Connection error')
     else:
         print('Connection successful!')
-        ntptime.host = "0.pool.ntp.org"
-        ntptime.settime()
+        try:
+            ntptime.host = "0.pool.ntp.org"
+            ntptime.settime()
+        except:
+            ntptime.host = "1.pool.ntp.org"
+            ntptime.settime()
         log(0, 'Wi-Fi Connection successful!')
         if config.status_led: wifi_led.value(1)
         network_info = wlan.ifconfig()
@@ -104,7 +109,22 @@ def get_pollution():
 def log(code, message):
     timestamp = int(f'{time.time()}000000') # TODO: to convert timestamp from NTP to nanoseconds format, this is very sketchy, make it better
     
-    file = open('log.txt', "a")
+    log_filename = 'log-0.txt'
+    directory = os.listdir()
+    for f in directory:
+        if f.startswith('log'):
+            print(f'Log filesize: {os.stat(f)[6]}')
+            if os.stat(f)[6] > MAX_LOG_FILESIZE:
+                log_number = 0
+                while True:
+                    if f'log-{log_number}.txt' in directory:
+                        log_number += 1
+                    else: 
+                        log_filename = f'log-{log_number}.txt'
+                        break
+            else: log_filename = f
+            
+    file = open(log_filename, "a")
     file.write(f'{timestamp}, {code}, {message}\n')
     file.close()
     
@@ -166,12 +186,12 @@ def main():
             utime.sleep(1)
             data_led.value(0)
 
-            stat = os.statvfs("/")
-            size = stat[1] * stat[2]
-            free = stat[0] * stat[3]
-            used = size - free
+        stat = os.statvfs("/")
+        size = stat[1] * stat[2]
+        free = stat[0] * stat[3]
+        used = size - free
             
-            print(f'Zajete: {used/size*100}% pamieci')
+        print(f'Zajete: {used/size*100}% pamieci')
         
         if status_timer == LOG_STATUS_OK:
             log(0, 'OK')
