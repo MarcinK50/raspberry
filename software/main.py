@@ -5,6 +5,7 @@ import config
 import ubinascii
 import os
 import ntptime, time
+import gc
 
 DO_DEBUG = True
 
@@ -131,6 +132,7 @@ def url_encode(string):
     return encoded_string
 
 def send_results(ID,temperature, humidity, pm1, pm25, pm10):
+    gc.collect()
     query = f"INSERT INTO sensors(id,temperature,humidity,pm1,pm25,pm10,timestamp) VALUES('{ID}',{str(temperature)},{str(humidity)},{str(pm1)},{str(pm25)},{str(pm10)},{time.time()}000000)"
     full_url = url+"?query="+url_encode(query)
     
