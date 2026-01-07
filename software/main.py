@@ -110,6 +110,7 @@ def log(code, message):
     timestamp = int(f'{time.time()}000000') # TODO: to convert timestamp from NTP to nanoseconds format, this is very sketchy, make it better
     
     log_filename = 'log-0.txt'
+<<<<<<< HEAD
     log_files = []
     directory = os.listdir()
     for f in directory:
@@ -119,11 +120,22 @@ def log(code, message):
                 while True:
                     if f'log-{log_number}.txt' in directory and os.stat(f'log-{log_number}.txt')[6] > MAX_LOG_FILESIZE:
                         log_files.append(log_number)
+=======
+    directory = os.listdir()
+    for f in directory:
+        if f.startswith('log'):
+            print(f'Log filesize: {os.stat(f)[6]}')
+            if os.stat(f)[6] > MAX_LOG_FILESIZE:
+                log_number = 0
+                while True:
+                    if f'log-{log_number}.txt' in directory:
+>>>>>>> 40354a13cc618861f32630f8e7054c426fcc2fc2
                         log_number += 1
                     else: 
                         log_filename = f'log-{log_number}.txt'
                         break
             else: log_filename = f
+<<<<<<< HEAD
     log_files = list(set(log_files))
     
     stat = os.statvfs("/")
@@ -137,6 +149,8 @@ def log(code, message):
         for log_number in log_files:
             os.remove(f'log-{log_number}.txt')
     
+=======
+>>>>>>> 40354a13cc618861f32630f8e7054c426fcc2fc2
             
     file = open(log_filename, "a")
     file.write(f'{timestamp}, {code}, {message}\n')
@@ -199,6 +213,16 @@ def main():
             data_led.value(1)
             utime.sleep(1)
             data_led.value(0)
+<<<<<<< HEAD
+=======
+
+        stat = os.statvfs("/")
+        size = stat[1] * stat[2]
+        free = stat[0] * stat[3]
+        used = size - free
+            
+        print(f'Zajete: {used/size*100}% pamieci')
+>>>>>>> 40354a13cc618861f32630f8e7054c426fcc2fc2
         
         if status_timer == LOG_STATUS_OK:
             log(0, 'OK')
