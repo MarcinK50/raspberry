@@ -5,6 +5,7 @@ import config
 import ubinascii
 import os
 import ntptime, time
+import gc
 
 DO_DEBUG = True
 
@@ -16,6 +17,8 @@ QUESTDB_PASSWORD = config.questdb_password
 ID = config.location_id
 IP, PORT = config.server_ip, config.server_port
 UPDATE_RATE = config.update_rate
+LOG_STATUS_OK = config.log_status_ok
+MAX_LOG_FILESIZE = config.max_log_filesize
 lat = config.lat
 lon = config.lon
 url = f"http://{IP}:{PORT}/exec"
@@ -64,14 +67,17 @@ def connect_to_wifi(ssid,password):
         raise RuntimeError('Connection error')
     else:
         print('Connection successful!')
+        try:
+            ntptime.host = "0.pool.ntp.org"
+            ntptime.settime()
+        except:
+            ntptime.host = "1.pool.ntp.org"
+            ntptime.settime()
         log(0, 'Wi-Fi Connection successful!')
         if config.status_led: wifi_led.value(1)
         network_info = wlan.ifconfig()
         if DO_DEBUG:
             print('IP:', network_info[0])
-            
-        ntptime.host = "tempus1.gum.gov.pl"
-        ntptime.settime()
        
 def get_temperature():
     try:
@@ -101,15 +107,54 @@ def get_pollution():
         return ['NULL', 'NULL', 'NULL']
     
 def log(code, message):
-    timestamp = time.time()
+    timestamp = int(f'{time.time()}000000') # TODO: to convert timestamp from NTP to nanoseconds format, this is very sketchy, make it better
     
-    file = open('log.txt', "a")
+    log_filename = 'log-0.txt'
+    log_files = []
+    directory = os.listdir()
+    for f in directory:
+        if f.startswith('log'):
+            if os.stat(f)[6] > MAX_LOG_FILESIZE:
+                log_number = 0
+                while True:
+                    if f'log-{log_number}.txt' in directory and os.stat(f'log-{log_number}.txt')[6] > MAX_LOG_FILESIZE:
+                        log_files.append(log_number)
+                        log_number += 1
+                    else: 
+                        log_filename = f'log-{log_number}.txt'
+                        break
+            else: log_filename = f
+    log_files = list(set(log_files))
+    
+    stat = os.statvfs("/")
+    size = stat[1] * stat[2]
+    free = stat[0] * stat[3]
+    used = size - free
+    print(f"Memory usage: {used/size*100}%")
+    
+    if used/size*100 > 80:
+        print("Memory used too much! Deleting oldest logs")
+        for log_number in log_files:
+            os.remove(f'log-{log_number}.txt')
+    
+            
+    file = open(log_filename, "a")
     file.write(f'{timestamp}, {code}, {message}\n')
     file.close()
     
-    query = f"INSERT INTO log(id,timestamp,code,message) VALUES('{ID}',{timestamp},{str(code)},{str(message)})"
-    full_url = url+"?query="+url_encode(query)
-    requests.get(url=full_url, auth=(QUESTDB_USER, QUESTDB_PASSWORD))
+    query = f"INSERT INTO log (id,timestamp,code,message) VALUES ({ID},{timestamp},{str(code)},'{str(message)}')"
+    log_url = url+"?query="+url_encode(query)
+    if DO_DEBUG:
+        print("[LOG] Executing query : ")
+        print(log_url)
+    try:
+        requests.get(url=log_url, auth=(QUESTDB_USER, QUESTDB_PASSWORD))
+        return 0
+    except Exception as error:
+        if str(error) == "Unsupported types for __add__: 'str', 'bytes'": return 0
+        else:
+            print("[LOG] General error: ",str(error))
+            return 1
 
 def url_encode(string):
     encoded_string = ''
@@ -121,7 +166,8 @@ def url_encode(string):
     return encoded_string
 
 def send_results(ID,temperature, humidity, pm1, pm25, pm10):
-    query = f"INSERT INTO sensors(id,temperature,humidity,pm1,pm25,pm10,timestamp) VALUES('{ID}',{str(temperature)},{str(humidity)},{str(pm1)},{str(pm25)},{str(pm10)},{time.time()})"
+    gc.collect()
+    query = f"INSERT INTO sensors(id,temperature,humidity,pm1,pm25,pm10,timestamp) VALUES('{ID}',{str(temperature)},{str(humidity)},{str(pm1)},{str(pm25)},{str(pm10)},{time.time()}000000)"
     full_url = url+"?query="+url_encode(query)
     
     
@@ -140,6 +186,7 @@ def send_results(ID,temperature, humidity, pm1, pm25, pm10):
 
 def main():
     connect_to_wifi(SSID,PASSWORD)
+    status_timer = 0
     while True:
         temperature, humidity = get_temperature()
         pm1, pm25, pm10 = get_pollution()
@@ -152,14 +199,11 @@ def main():
             data_led.value(1)
             utime.sleep(1)
             data_led.value(0)
-
-            stat = os.statvfs("/")
-            size = stat[1] * stat[2]
-            free = stat[0] * stat[3]
-            used = size - free
-            
-            print(f'Zajete: {used/size*100}% pamieci')
         
+        if status_timer == LOG_STATUS_OK:
+            log(0, 'OK')
+            status_timer = 0
+        else: status_timer += 1
         utime.sleep(UPDATE_RATE)
 
 main()
