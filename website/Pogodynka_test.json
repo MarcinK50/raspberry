@@ -1,0 +1,492 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_QUESTDB-POGODYNKA",
+      "label": "questdb-pogodynka",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "questdb-questdb-datasource",
+      "pluginName": "QuestDB"
+    }
+  ],
+  "__elements": {},
+  "__requires": [
+    {
+      "type": "panel",
+      "id": "geomap",
+      "name": "Geomap",
+      "version": ""
+    },
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "12.0.2"
+    },
+    {
+      "type": "datasource",
+      "id": "questdb-questdb-datasource",
+      "name": "QuestDB",
+      "version": "0.1.6"
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "questdb-questdb-datasource",
+        "uid": "${DS_QUESTDB-POGODYNKA}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": [
+            {
+              "options": {
+                "20": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "20"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 10
+              },
+              {
+                "color": "#EAB839",
+                "value": 20
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "temperature"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "celsius"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "basemap": {
+          "config": {
+            "server": "streets",
+            "showLabels": true,
+            "theme": "auto"
+          },
+          "name": "Layer 0",
+          "opacity": 1,
+          "tooltip": true,
+          "type": "osm-standard"
+        },
+        "controls": {
+          "mouseWheelZoom": true,
+          "showAttribution": true,
+          "showDebug": false,
+          "showMeasure": false,
+          "showScale": false,
+          "showZoom": true
+        },
+        "layers": [
+          {
+            "config": {
+              "showLegend": true,
+              "style": {
+                "color": {
+                  "fixed": "#000000"
+                },
+                "opacity": 0.4,
+                "rotation": {
+                  "fixed": 0,
+                  "max": 360,
+                  "min": -360,
+                  "mode": "mod"
+                },
+                "size": {
+                  "fixed": 5,
+                  "max": 15,
+                  "min": 2
+                },
+                "symbol": {
+                  "fixed": "img/icons/marker/circle.svg",
+                  "mode": "fixed"
+                },
+                "symbolAlign": {
+                  "horizontal": "center",
+                  "vertical": "center"
+                },
+                "text": {
+                  "field": "temperature",
+                  "fixed": "",
+                  "mode": "field"
+                },
+                "textConfig": {
+                  "fontSize": 12,
+                  "offsetX": 30,
+                  "offsetY": 0,
+                  "textAlign": "left",
+                  "textBaseline": "middle"
+                }
+              }
+            },
+            "location": {
+              "mode": "auto"
+            },
+            "name": "Temperatura",
+            "opacity": 0.6,
+            "tooltip": true,
+            "type": "markers"
+          },
+          {
+            "config": {
+              "showLegend": true,
+              "style": {
+                "color": {
+                  "fixed": "#472757"
+                },
+                "opacity": 0,
+                "rotation": {
+                  "fixed": 0,
+                  "max": 360,
+                  "min": -360,
+                  "mode": "mod"
+                },
+                "size": {
+                  "fixed": 5,
+                  "max": 15,
+                  "min": 2
+                },
+                "symbol": {
+                  "fixed": "img/icons/marker/x-mark.svg",
+                  "mode": "fixed"
+                },
+                "symbolAlign": {
+                  "horizontal": "center",
+                  "vertical": "center"
+                },
+                "text": {
+                  "field": "pm25",
+                  "fixed": "",
+                  "mode": "field"
+                },
+                "textConfig": {
+                  "fontSize": 12,
+                  "offsetX": 30,
+                  "offsetY": 20,
+                  "textAlign": "left",
+                  "textBaseline": "middle"
+                }
+              }
+            },
+            "location": {
+              "mode": "auto"
+            },
+            "name": "PM25",
+            "tooltip": true,
+            "type": "markers"
+          }
+        ],
+        "tooltip": {
+          "mode": "details"
+        },
+        "view": {
+          "allLayers": true,
+          "id": "coords",
+          "lat": 50.555446,
+          "lon": 16.680765,
+          "zoom": 15.35
+        }
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "builderOptions": {
+            "0": "T",
+            "1": "h",
+            "2": "e",
+            "3": " ",
+            "4": "q",
+            "5": "u",
+            "6": "e",
+            "7": "r",
+            "8": "y",
+            "9": " ",
+            "10": "c",
+            "11": "a",
+            "12": "n",
+            "13": "'",
+            "14": "t",
+            "15": " ",
+            "16": "b",
+            "17": "e",
+            "18": " ",
+            "19": "p",
+            "20": "a",
+            "21": "r",
+            "22": "s",
+            "23": "e",
+            "24": "d",
+            "25": ".",
+            "fields": [
+              "temperature"
+            ],
+            "filters": [],
+            "groupBy": [],
+            "limit": "",
+            "mode": "list",
+            "orderBy": [],
+            "partitionBy": [],
+            "table": "sensors",
+            "timeField": ""
+          },
+          "format": 1,
+          "meta": {
+            "builderOptions": {
+              "0": "T",
+              "1": "h",
+              "2": "e",
+              "3": " ",
+              "4": "q",
+              "5": "u",
+              "6": "e",
+              "7": "r",
+              "8": "y",
+              "9": " ",
+              "10": "c",
+              "11": "a",
+              "12": "n",
+              "13": "'",
+              "14": "t",
+              "15": " ",
+              "16": "b",
+              "17": "e",
+              "18": " ",
+              "19": "p",
+              "20": "a",
+              "21": "r",
+              "22": "s",
+              "23": "e",
+              "24": "d",
+              "25": ".",
+              "fields": [
+                "temperature"
+              ],
+              "filters": [],
+              "groupBy": [],
+              "limit": "",
+              "mode": "list",
+              "orderBy": [],
+              "partitionBy": [],
+              "table": "sensors",
+              "timeField": ""
+            }
+          },
+          "queryType": "sql",
+          "rawSql": "SELECT \"*\", 'u2gzefbcey8b' AS geohash FROM \"sensors\" LIMIT 1440",
+          "refId": "A",
+          "selectedFormat": 2,
+          "datasource": {
+            "type": "questdb-questdb-datasource",
+            "uid": "${DS_QUESTDB-POGODYNKA}"
+          }
+        }
+      ],
+      "title": "Geo Panel",
+      "type": "geomap"
+    },
+    {
+      "datasource": {
+        "type": "questdb-questdb-datasource",
+        "uid": "${DS_QUESTDB-POGODYNKA}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.2",
+      "targets": [
+        {
+          "builderOptions": {
+            "fields": [
+              "*"
+            ],
+            "limit": "1440",
+            "mode": "list",
+            "orderBy": [],
+            "sampleByAlignTo": "CALENDAR",
+            "table": "sensors",
+            "timeField": ""
+          },
+          "datasource": {
+            "type": "questdb-questdb-datasource",
+            "uid": "${DS_QUESTDB-POGODYNKA}"
+          },
+          "format": 1,
+          "meta": {
+            "builderOptions": {
+              "fields": [
+                "*"
+              ],
+              "limit": "1440",
+              "mode": "list",
+              "orderBy": [],
+              "sampleByAlignTo": "CALENDAR",
+              "table": "sensors",
+              "timeField": ""
+            }
+          },
+          "queryType": "sql",
+          "rawSql": "SELECT \"*\", 'u2gzefbcey8b' AS geohash FROM \"sensors\" LIMIT 1440",
+          "refId": "A",
+          "selectedFormat": 2
+        }
+      ],
+      "title": "New panel",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 41,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Pogodynka",
+  "uid": "ced98339-adc9-477d-aee0-f2fcc9ab40a9",
+  "version": 9,
+  "weekStart": ""
+}
