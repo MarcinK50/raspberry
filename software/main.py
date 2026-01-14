@@ -141,7 +141,10 @@ def log(code, message):
     file.write(f'{timestamp}, {code}, {message}\n')
     file.close()
     
-    query = f"INSERT INTO log (id,timestamp,code,message) VALUES ({ID},{timestamp},{str(code)},'{str(message)}')"
+    if DO_DEBUG:
+        query = f"INSERT INTO dev_log (id,timestamp,code,message) VALUES ({ID},{timestamp},{str(code)},'{str(message)}')"
+    else:
+        query = f"INSERT INTO log (id,timestamp,code,message) VALUES ({ID},{timestamp},{str(code)},'{str(message)}')"
     log_url = url+"?query="+url_encode(query)
     if DO_DEBUG:
         print("[LOG] Executing query : ")
@@ -166,7 +169,10 @@ def url_encode(string):
 
 def send_results(ID,temperature, humidity, pm1, pm25, pm10):
     gc.collect()
-    query = f"INSERT INTO sensors(id,temperature,humidity,pm1,pm25,pm10,timestamp) VALUES('{ID}',{str(temperature)},{str(humidity)},{str(pm1)},{str(pm25)},{str(pm10)},{time.time()}000000)"
+    if DO_DEBUG:
+        query = f"INSERT INTO dev_sensors(id,temperature,humidity,pm1,pm25,pm10,timestamp) VALUES('{ID}',{str(temperature)},{str(humidity)},{str(pm1)},{str(pm25)},{str(pm10)},{time.time()}000000)"
+    else:
+        query = f"INSERT INTO sensors(id,temperature,humidity,pm1,pm25,pm10,timestamp) VALUES('{ID}',{str(temperature)},{str(humidity)},{str(pm1)},{str(pm25)},{str(pm10)},{time.time()}000000)"
     full_url = url+"?query="+url_encode(query)
     
     
