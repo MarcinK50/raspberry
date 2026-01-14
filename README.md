@@ -11,3 +11,7 @@ power status (red) - GPIO10
 wifi status (yellow) - GPIO11
 data status (green) - GPIO12
 ```
+
+## Development branch - differences vs prod branch
+- tables have `dev_` prefix
+- another development dashboard on Grafana
