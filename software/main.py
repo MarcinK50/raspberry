@@ -7,7 +7,7 @@ import os
 import ntptime, time
 import gc
 
-DO_DEBUG = True
+DO_DEBUG = False
 
 SSID = config.ssid
 PASSWORD = config.password

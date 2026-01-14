@@ -1,11 +1,11 @@
-CREATE TABLE 'dev_config' (
+CREATE TABLE 'config' (
   id INT,
   lat DOUBLE,
   lon DOUBLE,
   location STRING,
   description STRING
 );
-CREATE TABLE 'dev_sensors' (
+CREATE TABLE 'sensors' (
   timestamp TIMESTAMP,
   id INT,
   temperature DOUBLE,
@@ -15,4 +15,4 @@ CREATE TABLE 'dev_sensors' (
   pm10 INT
 ) timestamp (timestamp) PARTITION BY MONTH WAL;
 
-CREATE TABLE 'dev_log' (id INT, timestamp TIMESTAMP, code INT, message STRING) timestamp (timestamp) PARTITION BY MONTH WAL;
+CREATE TABLE 'log' (id INT, timestamp TIMESTAMP, code INT, message STRING) timestamp (timestamp) PARTITION BY MONTH WAL;
