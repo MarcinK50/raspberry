@@ -1,0 +1,587 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_QUESTDB-LOCAL",
+      "label": "questdb-local",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "questdb-questdb-datasource",
+      "pluginName": "QuestDB"
+    }
+  ],
+  "__elements": {},
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "12.0.1"
+    },
+    {
+      "type": "datasource",
+      "id": "questdb-questdb-datasource",
+      "name": "QuestDB",
+      "version": "0.1.5"
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "questdb-questdb-datasource",
+        "uid": "${DS_QUESTDB-LOCAL}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "semi-dark-red",
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": 3600000,
+            "lineInterpolation": "smooth",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 1.5,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Temperatura"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "celsius"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Wilgotność"
+            },
+            "properties": [
+              {
+                "id": "min"
+              },
+              {
+                "id": "max"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "builderOptions": {
+            "fields": [
+              "temperature",
+              "humidity",
+              "pm1",
+              "pm25",
+              "pm10"
+            ],
+            "filters": [
+              {
+                "condition": "AND",
+                "key": "id",
+                "operator": "=",
+                "type": "int",
+                "value": 0
+              }
+            ],
+            "groupBy": [
+              "timestamp",
+              "temperature",
+              "humidity",
+              "id"
+            ],
+            "limit": "",
+            "mode": "trend",
+            "table": "sensors",
+            "timeField": "timestamp"
+          },
+          "datasource": {
+            "type": "questdb-questdb-datasource",
+            "uid": "${DS_QUESTDB-LOCAL}"
+          },
+          "format": 0,
+          "hide": false,
+          "meta": {
+            "builderOptions": {
+              "fields": [
+                "id",
+                "temperature",
+                "humidity",
+                "pm25",
+                "pm10",
+                "lat",
+                "lng"
+              ],
+              "filters": [
+                {
+                  "condition": "AND",
+                  "filterType": "custom",
+                  "key": "id",
+                  "operator": "=",
+                  "type": "INT",
+                  "value": 0
+                }
+              ],
+              "groupBy": [
+                "timestamp",
+                "temperature",
+                "humidity",
+                "pm1",
+                "pm25",
+                "pm10"
+              ],
+              "limit": "",
+              "metrics": [],
+              "mode": "trend",
+              "orderBy": [],
+              "partitionBy": [
+                "timestamp"
+              ],
+              "table": "sensors",
+              "timeField": "timestamp"
+            }
+          },
+          "queryType": "builder",
+          "rawSql": "SELECT timestamp as time, timestamp, temperature, humidity, id FROM \"sensors\" WHERE $__timeFilter(timestamp) AND  id = 0 SAMPLE BY $__sampleByInterval",
+          "refId": "B",
+          "selectedFormat": 2
+        }
+      ],
+      "title": "Temperatura i wilgotność",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "id": true
+            },
+            "includeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "humidity": "Wilgotność",
+              "pm1": "PM1",
+              "pm10": "PM10",
+              "pm25": "PM2.5",
+              "temperature": "Temperatura",
+              "time": "",
+              "timestamp": ""
+            }
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "questdb-questdb-datasource",
+        "uid": "${DS_QUESTDB-LOCAL}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": 3600000,
+            "lineInterpolation": "smooth",
+            "lineWidth": 1.5,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "PM2.5"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "dark-green"
+                    },
+                    {
+                      "color": "green",
+                      "value": 20
+                    },
+                    {
+                      "color": "#EAB839",
+                      "value": 100
+                    },
+                    {
+                      "color": "red",
+                      "value": 150
+                    },
+                    {
+                      "color": "dark-red",
+                      "value": 200
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "unit",
+                "value": "conμgm3"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "PM10"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "dark-green"
+                    },
+                    {
+                      "color": "green",
+                      "value": 30
+                    },
+                    {
+                      "color": "#EAB839",
+                      "value": 60
+                    },
+                    {
+                      "color": "red",
+                      "value": 140
+                    },
+                    {
+                      "color": "dark-red",
+                      "value": 200
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "unit",
+                "value": "conμgm3"
+              },
+              {
+                "id": "custom.thresholdsStyle",
+                "value": {
+                  "mode": "dashed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 24,
+        "x": 0,
+        "y": 10
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "builderOptions": {
+            "fields": [
+              "temperature",
+              "humidity",
+              "pm1",
+              "pm25",
+              "pm10"
+            ],
+            "filters": [
+              {
+                "condition": "AND",
+                "key": "id",
+                "operator": "=",
+                "type": "int",
+                "value": 0
+              }
+            ],
+            "groupBy": [
+              "timestamp",
+              "id",
+              "pm1",
+              "pm25",
+              "pm10"
+            ],
+            "limit": "",
+            "mode": "trend",
+            "table": "sensors",
+            "timeField": "timestamp"
+          },
+          "datasource": {
+            "type": "questdb-questdb-datasource",
+            "uid": "${DS_QUESTDB-LOCAL}"
+          },
+          "format": 0,
+          "hide": false,
+          "meta": {
+            "builderOptions": {
+              "fields": [
+                "id",
+                "temperature",
+                "humidity",
+                "pm25",
+                "pm10",
+                "lat",
+                "lng"
+              ],
+              "filters": [
+                {
+                  "condition": "AND",
+                  "filterType": "custom",
+                  "key": "id",
+                  "operator": "=",
+                  "type": "INT",
+                  "value": 0
+                }
+              ],
+              "groupBy": [
+                "timestamp",
+                "temperature",
+                "humidity",
+                "pm1",
+                "pm25",
+                "pm10"
+              ],
+              "limit": "",
+              "metrics": [],
+              "mode": "trend",
+              "orderBy": [],
+              "partitionBy": [
+                "timestamp"
+              ],
+              "table": "sensors",
+              "timeField": "timestamp"
+            }
+          },
+          "queryType": "builder",
+          "rawSql": "SELECT timestamp as time, timestamp, id, pm1, pm25, pm10 FROM \"sensors\" WHERE $__timeFilter(timestamp) AND  id = 0 SAMPLE BY $__sampleByInterval",
+          "refId": "B",
+          "selectedFormat": 2
+        }
+      ],
+      "title": "Jakość powietrza",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "id": true,
+              "pm1": true
+            },
+            "includeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "humidity": "Wilgotność",
+              "pm1": "PM1",
+              "pm10": "PM10",
+              "pm25": "PM2.5",
+              "temperature": "Temperatura",
+              "time": "",
+              "timestamp": ""
+            }
+          }
+        }
+      ],
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 41,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "definition": "SELECT config.location\nFROM sensors\nINNER JOIN config ON sensors.id = config.id; ",
+        "label": "Lokalizacja",
+        "name": "sensor_id",
+        "options": [],
+        "query": "SELECT config.location\nFROM sensors\nINNER JOIN config ON sensors.id = config.id; ",
+        "refresh": 1,
+        "regex": "",
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-3h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Dokładne dane",
+  "uid": "efb19314-7e66-4cd6-b8ed-0a0940459b89",
+  "version": 24,
+  "weekStart": ""
+}
