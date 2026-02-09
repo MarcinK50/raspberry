@@ -66,7 +66,7 @@ def connect_to_wifi(ssid,password):
         log(2, 'Wi-Fi Connection error!')
         raise RuntimeError('Connection error')
     else:
-        print('Connection successful!')
+        print('\nConnection successful!')
         try:
             ntptime.host = "0.pool.ntp.org"
             ntptime.settime()
@@ -138,9 +138,11 @@ def log(code, message):
             os.remove(f'log-{log_number}.txt')
             
     file = open(log_filename, "a")
-    file.write(f'{timestamp}, {code}, {message}\n')
+    tm = time.localtime()
+    st = f'{tm[0]:04d}-{tm[1]:02d}-{tm[2]:02d} {tm[3]:02d}-{tm[4]:02d}-{tm[5]:02d}'    
+    file.write(f'{st}, {code}, {message}\n')
     file.close()
-    
+       
     query = f"INSERT INTO log (id,timestamp,code,message) VALUES ({ID},{timestamp},{str(code)},'{str(message)}')"
     log_url = url+"?query="+url_encode(query)
     if DO_DEBUG:
@@ -167,8 +169,7 @@ def url_encode(string):
 def send_results(ID,temperature, humidity, pm1, pm25, pm10):
     gc.collect()
     query = f"INSERT INTO sensors(id,temperature,humidity,pm1,pm25,pm10,timestamp) VALUES('{ID}',{str(temperature)},{str(humidity)},{str(pm1)},{str(pm25)},{str(pm10)},{time.time()}000000)"
-    full_url = url+"?query="+url_encode(query)
-    
+    full_url = url+"?query="+url_encode(query)    
     
     if DO_DEBUG:
         print("Executing query : ")
